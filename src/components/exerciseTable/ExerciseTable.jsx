@@ -1,47 +1,36 @@
 import React, { Fragment, useRef, useState, useEffect } from "react";
-import { Dialog, Transition, Combobox } from "@headlessui/react";
+import { Dialog, Transition } from "@headlessui/react";
 import axios from "axios";
 import { ExclamationIcon } from "@heroicons/react/outline";
-import { data } from "autoprefixer";
+
 
 function ExcersiceTable() {
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [APIData, setAPIData] = useState([]);
+  const cancelButtonRef = useRef(null);
+
+  const [oefeningName, setOefeningName] = useState("");
+  const [kg, setKg] = useState("");
+  
   const [activeData, setActiveData] = useState({
     id: "",
     kg: "",
     oefeningName: "",
   });
-  const cancelButtonRef = useRef(null);
-  const [kg, setKg] = useState("");
-  const [oefeningName, setOefeningName] = useState("");
+
+  const [APIData, setAPIData] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  function handleEdit(data) {
+
+  function handleOpenEditModal(data) {
     setOpenEditModal(true);
     setActiveData(data);
   }
 
-  function handleDelete(data) {
+  function handleOpenDeleteModal(data) {
     setOpenDeleteModal(true);
     setActiveData(data);
-  }
-
-  function handleAddExerciseForm() {
-    setOpenAddModal(false);
-    postData();
-  }
-
-  function handleEditModal() {
-    setOpenEditModal(false);
-    editData(activeData);
-  }
-
-  function handleDeleteModal() {
-    setOpenDeleteModal(false);
-    deleteData(activeData.id);
   }
 
   function handleOefeningNameChange(e) {
@@ -59,6 +48,7 @@ function ExcersiceTable() {
   }
 
   async function editData({ id, oefeningName, kg }) {
+    setOpenEditModal(false);
     try {
       await axios.put(
         `https://623b88862e056d1037f3dfb2.mockapi.io/fakeData/${id}`,
@@ -74,6 +64,7 @@ function ExcersiceTable() {
   }
 
   async function postData() {
+    setOpenAddModal(false);
     try {
       await axios.post(`https://623b88862e056d1037f3dfb2.mockapi.io/fakeData`, {
         oefeningName,
@@ -86,6 +77,7 @@ function ExcersiceTable() {
   }
 
   async function deleteData(id) {
+    setOpenDeleteModal(false);
     try {
       await axios.delete(
         `https://623b88862e056d1037f3dfb2.mockapi.io/fakeData/${id}`
@@ -96,7 +88,7 @@ function ExcersiceTable() {
     }
   }
 
-  useEffect(async () => {
+  useEffect(async function getData() {
     try {
       const result = await axios.get(
         `https://623b88862e056d1037f3dfb2.mockapi.io/fakeData`
@@ -106,7 +98,6 @@ function ExcersiceTable() {
       console.error(e);
     }
 
-    console.log(activeData);
   }, [refreshKey]);
 
   return (
@@ -143,7 +134,7 @@ function ExcersiceTable() {
                     <button
                       type="button"
                       className="w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm mr-4 p-0 sm:p-1 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={(e) => handleEdit(data)}
+                      onClick={(e) => handleOpenEditModal(data)}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -163,7 +154,7 @@ function ExcersiceTable() {
                     <button
                       type="button"
                       className="w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm p-0 sm:p-1 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={(e) => handleDelete(data)}
+                      onClick={(e) => handleOpenDeleteModal(data)}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -187,6 +178,7 @@ function ExcersiceTable() {
           </tbody>
         </table>
       </div>
+
       {/* Add modal */}
       <Transition.Root show={openAddModal} as={Fragment}>
         <Dialog
@@ -262,11 +254,11 @@ function ExcersiceTable() {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <div className="bg-gray-100 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button
                       type="button"
-                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-500 text-base font-medium text-white hover:bg-green-600 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={handleAddExerciseForm}
+                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm"
+                      onClick={postData}
                     >
                       Toevoegen
                     </button>
@@ -361,11 +353,11 @@ function ExcersiceTable() {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <div className="bg-gray-100 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button
                       type="button"
-                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-500 text-base font-medium text-white hover:bg-green-600 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={handleEditModal}
+                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm"
+                      onClick={(e) => editData(activeData)}
                     >
                       Bijwerken
                     </button>
@@ -454,7 +446,7 @@ function ExcersiceTable() {
                   <button
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-70 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={(e) => handleDeleteModal(data.id)}
+                    onClick={(e) => deleteData(activeData.id)}
                   >
                     Verwijderen
                   </button>
