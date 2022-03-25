@@ -1,0 +1,56 @@
+table {
+    text-align: left;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: white;
+    box-shadow: 0 10px 25px rgb(0 0 0 / 5%), 0 20px 48px rgb(0 0 0 / 5%), 0 1px 4px rgb(0 0 0 / 10%);
+    width: 550px;
+    border-radius: 8px;
+}
+
+th {
+    background-color: #fb7002;
+    color: white;
+    padding: 10px;
+}
+
+tr {
+    border-bottom: solid 2px black;
+}
+
+tr:last-child {
+    border :none;
+}
+
+td {
+    padding: 10px;
+}
+
+.add-exercise {
+    background-color: #2d2d2d;
+    text-align: center;
+    cursor: pointer;
+}
+
+.add-exercise:hover {
+    background-color: #040404;
+    transition: 0.2s;
+}
+
+.delete-exercise {
+    background-color: red;
+    color: white;
+    font-weight: 800;
+    text-align: center;
+    cursor: pointer;
+}
+
+.delete-exercise:hover {
+    background-color: red;
+    transition: 0.2s;
+}
+
+.exercise-name {
+    font-weight: 800;
+}
