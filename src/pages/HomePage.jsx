@@ -1,6 +1,4 @@
-import React from "react";
-
-function HomePage(){
+export default function HomePage(){
     return(
         <div className="relative flex justify-center bg-white overflow-hidden min-h-screen">
         <div className="max-w-7xl mx-auto">
@@ -37,5 +35,3 @@ function HomePage(){
       </div>
     )
 }
-
-export default HomePage;

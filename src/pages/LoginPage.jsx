@@ -1,6 +1,4 @@
-import React from "react";
-
-function loginpage() {
+export default function loginpage() {
   return (
     <div className="w-full py-20">
       <form className="w-1/3 m-auto shadow-md p-5 rounded-md bg-white">
@@ -33,4 +31,3 @@ function loginpage() {
   );
 }
 
-export default loginpage;

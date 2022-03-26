@@ -1,30 +1,35 @@
 import React, { Fragment, useRef, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import axios from "axios";
 import { ExclamationIcon } from "@heroicons/react/outline";
-
+import { db } from "../firebase-config";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 
 function ExcersiceTable() {
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const cancelButtonRef = useRef(null);
 
-  const [oefeningName, setOefeningName] = useState("");
-  const [kg, setKg] = useState("");
-  
-  const [activeData, setActiveData] = useState({
-    id: "",
-    kg: "",
-    oefeningName: "",
-  });
-
   const [APIData, setAPIData] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const exercisesCollectionRef = collection(db, "exercises");
+  const [oefeningName, setOefeningName] = useState("");
+  const [kg, setKg] = useState("");
+  const [activeData, setActiveData] = useState({
+    id: "",
+    kg: Number(),
+    name: "",
+  });
 
-
-  function handleOpenEditModal(data) {
-    setOpenEditModal(true);
+  function handleOpenUpdateModal(data) {
+    setOpenUpdateModal(true);
     setActiveData(data);
   }
 
@@ -36,7 +41,7 @@ function ExcersiceTable() {
   function handleOefeningNameChange(e) {
     setActiveData({
       ...activeData,
-      oefeningName: e.target.value,
+      name: e.target.value,
     });
   }
 
@@ -47,64 +52,47 @@ function ExcersiceTable() {
     });
   }
 
-  async function editData({ id, oefeningName, kg }) {
-    setOpenEditModal(false);
-    try {
-      await axios.put(
-        `https://623b88862e056d1037f3dfb2.mockapi.io/fakeData/${id}`,
-        {
-          oefeningName,
-          kg,
-        }
-      );
-      setRefreshKey((oldKey) => oldKey + 1);
-    } catch (e) {
-      console.error(e);
-    }
-  }
+  const createExercise = async () => {
+    setOpenCreateModal(false);
+    await addDoc(exercisesCollectionRef, {
+      name: oefeningName,
+      kg: Number(kg),
+    });
 
-  async function postData() {
-    setOpenAddModal(false);
-    try {
-      await axios.post(`https://623b88862e056d1037f3dfb2.mockapi.io/fakeData`, {
-        oefeningName,
-        kg,
-      });
-      setRefreshKey((oldKey) => oldKey + 1);
-    } catch (e) {
-      console.error(e);
-    }
-  }
+    setRefreshKey((oldKey) => oldKey + 1);
+  };
 
-  async function deleteData(id) {
+  const updateExercise = async (id, name, kg) => {
+    setOpenUpdateModal(false);
+    const exerciseDoc = doc(db, "exercises", id);
+    const newFields = { name: name, kg: Number(kg) };
+    await updateDoc(exerciseDoc, newFields);
+
+    setRefreshKey((oldKey) => oldKey + 1);
+  };
+
+  const deleteExercise = async (id) => {
     setOpenDeleteModal(false);
-    try {
-      await axios.delete(
-        `https://623b88862e056d1037f3dfb2.mockapi.io/fakeData/${id}`
-      );
-      setRefreshKey((oldKey) => oldKey + 1);
-    } catch (e) {
-      console.error(e);
-    }
-  }
+    const exerciseDoc = doc(db, "exercises", id);
+    await deleteDoc(exerciseDoc);
 
-  useEffect(async function getData() {
-    try {
-      const result = await axios.get(
-        `https://623b88862e056d1037f3dfb2.mockapi.io/fakeData`
-      );
-      setAPIData(result.data);
-    } catch (e) {
-      console.error(e);
-    }
+    setRefreshKey((oldKey) => oldKey + 1);
+  };
 
+  useEffect(() => {
+    const getExercises = async () => {
+      const data = await getDocs(exercisesCollectionRef);
+      setAPIData(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+    };
+
+    getExercises();
   }, [refreshKey]);
 
   return (
     <div className="relative flex flex-col mx-auto max-w-3xl my-5 px-6 sm:px-0">
       <div className="w-full flex justify-end">
         <button
-          onClick={(e) => setOpenAddModal(true)}
+          onClick={(e) => setOpenCreateModal(true)}
           type="button"
           className="bg-green-600 hover:bg-green-700 rounded-md text-sm text-white px-4 py-2 text font-bold"
         >
@@ -128,13 +116,13 @@ function ExcersiceTable() {
             {APIData.map((data) => {
               return (
                 <tr className="odd:bg-white even:bg-gray-100" key={data.id}>
-                  <td className="px-4 py-4 text- font-bold">{data.oefeningName}</td>
+                  <td className="px-4 py-4 text- font-bold">{data.name}</td>
                   <td className="px-4 py-4 font-bold ">{data.kg}</td>
                   <td className="px-4 py-4 text-right text-sm">
                     <button
                       type="button"
                       className="w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm mr-4 p-0 sm:p-1 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={(e) => handleOpenEditModal(data)}
+                      onClick={(e) => handleOpenUpdateModal(data)}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -180,12 +168,12 @@ function ExcersiceTable() {
       </div>
 
       {/* Add modal */}
-      <Transition.Root show={openAddModal} as={Fragment}>
+      <Transition.Root show={openCreateModal} as={Fragment}>
         <Dialog
           as="div"
           className="fixed z-10 inset-0 overflow-y-auto"
           initialFocus={cancelButtonRef}
-          onClose={setOpenAddModal}
+          onClose={setOpenCreateModal}
         >
           <div className="flex items-end justify-center sm:min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <Transition.Child
@@ -234,7 +222,6 @@ function ExcersiceTable() {
                           <input
                             type="text"
                             placeholder="Naam oefening"
-                            value={oefeningName}
                             onChange={(e) => setOefeningName(e.target.value)}
                             className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400"
                           />
@@ -246,7 +233,6 @@ function ExcersiceTable() {
                           <input
                             type="number"
                             placeholder="Aantal KG"
-                            value={kg}
                             onChange={(e) => setKg(e.target.value)}
                             className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400"
                           />
@@ -258,14 +244,14 @@ function ExcersiceTable() {
                     <button
                       type="button"
                       className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={postData}
+                      onClick={createExercise}
                     >
                       Toevoegen
                     </button>
                     <button
                       type="button"
                       className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none  sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={() => setOpenAddModal(false)}
+                      onClick={() => setOpenCreateModal(false)}
                       ref={cancelButtonRef}
                     >
                       Annuleren
@@ -279,12 +265,12 @@ function ExcersiceTable() {
       </Transition.Root>
 
       {/* Edit modal */}
-      <Transition.Root show={openEditModal} as={Fragment}>
+      <Transition.Root show={openUpdateModal} as={Fragment}>
         <Dialog
           as="div"
           className="fixed z-10 inset-0 overflow-y-auto"
           initialFocus={cancelButtonRef}
-          onClose={setOpenEditModal}
+          onClose={setOpenUpdateModal}
         >
           <div className="flex items-end justify-center sm:min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <Transition.Child
@@ -333,7 +319,7 @@ function ExcersiceTable() {
                           <input
                             type="text"
                             placeholder="Naam oefening"
-                            value={activeData.oefeningName}
+                            value={activeData.name}
                             onChange={handleOefeningNameChange}
                             className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400"
                           />
@@ -357,14 +343,20 @@ function ExcersiceTable() {
                     <button
                       type="button"
                       className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={(e) => editData(activeData)}
+                      onClick={(e) =>
+                        updateExercise(
+                          activeData.id,
+                          activeData.name,
+                          activeData.kg
+                        )
+                      }
                     >
                       Bijwerken
                     </button>
                     <button
                       type="button"
                       className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none  sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={() => setOpenEditModal(false)}
+                      onClick={() => setOpenUpdateModal(false)}
                       ref={cancelButtonRef}
                     >
                       Annuleren
@@ -446,7 +438,7 @@ function ExcersiceTable() {
                   <button
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-70 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={(e) => deleteData(activeData.id)}
+                    onClick={(e) => deleteExercise(activeData.id)}
                   >
                     Verwijderen
                   </button>

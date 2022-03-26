@@ -1,5 +1,4 @@
-import React from "react";
-import ExcersiceTable from "../components/exerciseTable/ExerciseTable";
+import ExcersiceTable from "../components/ExerciseTable";
 
 function SportTracker() {
   return <ExcersiceTable />;
